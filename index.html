@@ -224,7 +224,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 </div>
 </div>
 
-<script type="module">
+<script>
 /* ═══════════════════════════════════════════════
    DATA
 ═══════════════════════════════════════════════ */
@@ -238,36 +238,43 @@ const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto
 
 let data = {elements:[], nid:1};
 let db = null;
-const DOC_REF_PATH = 'users/agustin/overview';
+const DOC_PATH = 'users/agustin/overview';
 
-// ── FIREBASE INIT ──
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+async function initFirebase() {
+  // Firebase compat SDK — funciona sin bundler
+  await loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+  await loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js');
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAtTH5qxYnjvZJWrcdqqP63kWTxJ1hkh5U",
-  authDomain: "overview-chenz.firebaseapp.com",
-  projectId: "overview-chenz",
-  storageBucket: "overview-chenz.firebasestorage.app",
-  messagingSenderId: "144806664734",
-  appId: "1:144806664734:web:32b2490421d6b68a406c0f"
-};
+  firebase.initializeApp({
+    apiKey: "AIzaSyAtTH5qxYnjvZJWrcdqqP63kWTxJ1hkh5U",
+    authDomain: "overview-chenz.firebaseapp.com",
+    projectId: "overview-chenz",
+    storageBucket: "overview-chenz.firebasestorage.app",
+    messagingSenderId: "144806664734",
+    appId: "1:144806664734:web:32b2490421d6b68a406c0f"
+  });
+  db = firebase.firestore();
+}
 
-const firebaseApp = initializeApp(firebaseConfig);
-db = getFirestore(firebaseApp);
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
 
 async function loadFromFirestore() {
   try {
-    const ref = doc(db, DOC_REF_PATH);
-    const snap = await getDoc(ref);
-    if (snap.exists()) {
+    await initFirebase();
+    const snap = await db.doc(DOC_PATH).get();
+    if (snap.exists) {
       const d = snap.data();
       data.elements = d.elements || [];
       data.nid = d.nid || 1;
     }
   } catch(e) {
     console.warn('Firestore load error:', e);
-    // fallback a localStorage
     try{const s=localStorage.getItem('ov3');if(s){const p=JSON.parse(s);data=p;}}catch(e2){}
   }
   render();
@@ -275,9 +282,7 @@ async function loadFromFirestore() {
 
 async function save() {
   try {
-    const ref = doc(db, DOC_REF_PATH);
-    await setDoc(ref, { elements: data.elements, nid: data.nid });
-    // backup local
+    await db.doc(DOC_PATH).set({ elements: data.elements, nid: data.nid });
     localStorage.setItem('ov3', JSON.stringify(data));
   } catch(e) {
     console.warn('Firestore save error:', e);
