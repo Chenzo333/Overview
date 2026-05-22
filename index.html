@@ -105,23 +105,36 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .settings-btn svg{pointer-events:none}
 .settings-overlay{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.18);align-items:center;justify-content:center}
 .settings-overlay.open{display:flex}
-.settings-panel{background:var(--surface);border-radius:14px;padding:22px;width:380px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 48px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:16px}
+.settings-panel{background:var(--surface);border-radius:14px;padding:22px;width:400px;max-height:85vh;overflow-y:auto;box-shadow:0 8px 48px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:18px}
 .settings-head{display:flex;align-items:center;justify-content:space-between}
 .settings-head h2{font-size:14px;font-weight:500}
-.settings-close{width:24px;height:24px;border:none;background:transparent;cursor:pointer;color:var(--t2);font-size:18px;display:flex;align-items:center;justify-content:center;border-radius:5px}
-.settings-close:hover{background:var(--bg)}
-.area-list{display:flex;flex-direction:column;gap:6px}
-.area-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg)}
-.area-color-btn{width:20px;height:20px;border-radius:50%;border:2px solid rgba(0,0,0,.1);cursor:pointer;flex-shrink:0;position:relative}
-.area-name-input{flex:1;border:none;background:transparent;font-family:var(--font);font-size:12px;color:var(--t1);outline:none;padding:0}
-.area-del-btn{width:20px;height:20px;border:none;background:transparent;cursor:pointer;color:var(--t3);font-size:14px;display:flex;align-items:center;justify-content:center;border-radius:4px;flex-shrink:0}
-.area-del-btn:hover{color:#c0392b;background:rgba(192,57,43,.08)}
-.add-area-btn{display:flex;align-items:center;gap:6px;padding:7px 10px;border:1px dashed var(--border-md);border-radius:8px;background:transparent;font-family:var(--font);font-size:12px;color:var(--t2);cursor:pointer;transition:all .12s;width:100%}
-.add-area-btn:hover{border-color:var(--t2);color:var(--t1)}
-.color-palette{display:flex;flex-wrap:wrap;gap:6px;padding:10px;background:var(--surface);border:1px solid var(--border-md);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);position:absolute;z-index:400;top:26px;left:0}
-.color-swatch{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .1s}
-.color-swatch:hover{transform:scale(1.15)}
-.color-swatch.picked{border-color:#1a1917}
+.settings-close{width:26px;height:26px;border:none;background:transparent;cursor:pointer;color:var(--t2);font-size:18px;display:flex;align-items:center;justify-content:center;border-radius:6px}
+.settings-close:hover{background:var(--bg);color:var(--t1)}
+
+/* area cards */
+.area-list{display:flex;flex-direction:column;gap:8px}
+.area-card{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface);transition:box-shadow .15s}
+.area-card:focus-within{box-shadow:0 0 0 2px rgba(24,95,165,.2);border-color:rgba(24,95,165,.3)}
+.area-card-top{display:flex;align-items:center;gap:10px;padding:10px 12px}
+.area-card-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.area-card-name{flex:1;border:none;background:transparent;font-family:var(--font);font-size:13px;font-weight:500;color:var(--t1);outline:none;padding:0;min-width:0}
+.area-card-name::placeholder{color:var(--t3)}
+.area-card-actions{display:flex;align-items:center;gap:4px}
+.area-card-edit{padding:3px 8px;border:1px solid var(--border-md);border-radius:5px;background:transparent;font-family:var(--font);font-size:10px;color:var(--t2);cursor:pointer;transition:all .1s;white-space:nowrap}
+.area-card-edit:hover{background:var(--bg);color:var(--t1)}
+.area-card-del{width:22px;height:22px;border:none;background:transparent;cursor:pointer;color:var(--t3);font-size:15px;display:flex;align-items:center;justify-content:center;border-radius:5px;transition:all .1s}
+.area-card-del:hover{color:#c0392b;background:rgba(192,57,43,.07)}
+
+/* color picker expandible */
+.area-color-picker{display:none;padding:10px 12px 12px;border-top:1px solid var(--border);background:var(--bg)}
+.area-color-picker.open{display:block}
+.color-grid{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.c-swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;transition:transform .1s,border-color .1s;flex-shrink:0}
+.c-swatch:hover{transform:scale(1.18)}
+.c-swatch.picked{border-color:var(--t1) !important}
+
+.add-area-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 10px;border:1.5px dashed var(--border-md);border-radius:10px;background:transparent;font-family:var(--font);font-size:12px;color:var(--t2);cursor:pointer;transition:all .12s;width:100%}
+.add-area-btn:hover{border-color:var(--t2);color:var(--t1);background:var(--bg)}
 </style>
 </head>
 <body>
@@ -921,74 +934,93 @@ document.getElementById('settingsOverlay').addEventListener('mousedown', e => {
 function renderAreaList(){
   const list = document.getElementById('areaList');
   list.innerHTML = '';
+
   AREAS.forEach((area, idx) => {
-    const row = document.createElement('div');
-    row.className = 'area-row';
+    const card = document.createElement('div');
+    card.className = 'area-card';
 
-    // color button
-    const colorWrap = document.createElement('div');
-    colorWrap.style.position = 'relative';
+    // top row
+    const top = document.createElement('div');
+    top.className = 'area-card-top';
 
-    const colorBtn = document.createElement('div');
-    colorBtn.className = 'area-color-btn';
-    colorBtn.style.background = area.color;
-    colorBtn.title = 'Cambiar color';
+    const dot = document.createElement('div');
+    dot.className = 'area-card-dot';
+    dot.style.background = area.color;
 
-    // palette popup
-    const palette = document.createElement('div');
-    palette.className = 'color-palette hide';
-    PALETTE.forEach(c => {
-      const sw = document.createElement('div');
-      sw.className = 'color-swatch' + (c === area.color ? ' picked' : '');
-      sw.style.background = c;
-      sw.addEventListener('click', e => {
-        e.stopPropagation();
-        AREAS[idx].color = c;
-        AREAS[idx].bg = colorBg(c);
-        saveAreas();
-        palette.classList.add('hide');
-        renderAreaList();
-      });
-      palette.appendChild(sw);
-    });
-
-    colorBtn.addEventListener('click', e => {
-      e.stopPropagation();
-      // cerrar otras paletas abiertas
-      document.querySelectorAll('.color-palette').forEach(p => p.classList.add('hide'));
-      palette.classList.toggle('hide');
-    });
-
-    colorWrap.appendChild(colorBtn);
-    colorWrap.appendChild(palette);
-
-    // name input
     const nameInput = document.createElement('input');
-    nameInput.className = 'area-name-input';
+    nameInput.className = 'area-card-name';
     nameInput.value = area.label;
+    nameInput.placeholder = 'Nombre del área';
     nameInput.addEventListener('input', () => {
       AREAS[idx].label = nameInput.value;
       saveAreas();
     });
 
-    // delete btn (no borrar si queda solo 1)
+    const actions = document.createElement('div');
+    actions.className = 'area-card-actions';
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'area-card-edit';
+    editBtn.textContent = 'Color';
+
     const delBtn = document.createElement('button');
-    delBtn.className = 'area-del-btn';
+    delBtn.className = 'area-card-del';
     delBtn.innerHTML = '×';
-    delBtn.title = 'Eliminar área';
+    delBtn.title = 'Eliminar';
     delBtn.addEventListener('click', () => {
-      if(AREAS.length <= 1){ return; }
-      AREAS.splice(idx, 1);
-      // si el área eliminada era la seleccionada en modal, resetear
+      if(AREAS.length <= 1) return;
+      AREAS.splice(idx,1);
       if(mArea === area.id) mArea = AREAS[0].id;
       saveAreas();
       renderAreaList();
     });
 
-    row.appendChild(colorWrap);
-    row.appendChild(nameInput);
-    row.appendChild(delBtn);
-    list.appendChild(row);
+    actions.appendChild(editBtn);
+    actions.appendChild(delBtn);
+    top.appendChild(dot);
+    top.appendChild(nameInput);
+    top.appendChild(actions);
+
+    // color picker section
+    const picker = document.createElement('div');
+    picker.className = 'area-color-picker';
+
+    const pickerLbl = document.createElement('div');
+    pickerLbl.style.cssText = 'font-size:10px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.07em';
+    pickerLbl.textContent = 'Color';
+
+    const grid = document.createElement('div');
+    grid.className = 'color-grid';
+    PALETTE.forEach(c => {
+      const sw = document.createElement('div');
+      sw.className = 'c-swatch' + (c === area.color ? ' picked' : '');
+      sw.style.background = c;
+      sw.addEventListener('click', () => {
+        AREAS[idx].color = c;
+        AREAS[idx].bg = colorBg(c);
+        saveAreas();
+        renderAreaList();
+      });
+      grid.appendChild(sw);
+    });
+
+    picker.appendChild(pickerLbl);
+    picker.appendChild(grid);
+
+    editBtn.addEventListener('click', () => {
+      const isOpen = picker.classList.contains('open');
+      // cerrar todos
+      document.querySelectorAll('.area-color-picker').forEach(p => p.classList.remove('open'));
+      document.querySelectorAll('.area-card-edit').forEach(b => { b.textContent = 'Color'; b.style.background = ''; });
+      if(!isOpen){
+        picker.classList.add('open');
+        editBtn.textContent = 'Listo';
+      }
+    });
+
+    card.appendChild(top);
+    card.appendChild(picker);
+    list.appendChild(card);
   });
 }
 
@@ -1004,10 +1036,12 @@ document.getElementById('addAreaBtn').addEventListener('click', () => {
   if(inputs.length) inputs[inputs.length-1].select();
 });
 
-// cerrar paleta al click fuera
-document.addEventListener('click', () => {
-  document.querySelectorAll('.color-palette').forEach(p => p.classList.remove('hide'));
-  document.querySelectorAll('.color-palette').forEach(p => p.classList.add('hide'));
+// cerrar color pickers al click fuera del settings panel
+document.getElementById('settingsPanel').addEventListener('click', e => {
+  if(!e.target.closest('.area-card')) {
+    document.querySelectorAll('.area-color-picker').forEach(p => p.classList.remove('open'));
+    document.querySelectorAll('.area-card-edit').forEach(b => b.textContent = 'Color');
+  }
 });
 
 // rebuild legend dinámica
