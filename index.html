@@ -107,6 +107,12 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .btn-save:hover{opacity:.84}
 .note{font-size:10px;color:var(--t3);line-height:1.5}
 .hide{display:none!important}
+/* punto 1: pasado difuminado */
+.day.past{opacity:0.45}
+.band.past{opacity:0.38}
+/* punto 2: botones de orden */
+.ord-btn{width:26px;height:26px;border:1px solid var(--border-md);border-radius:6px;background:transparent;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t2);transition:all .1s}
+.ord-btn:hover{background:var(--bg);color:var(--t1)}
 
 /* ── SETTINGS ── */
 .settings-btn{width:28px;height:28px;border:1px solid var(--border-md);border-radius:6px;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t2);transition:background .1s;flex-shrink:0}
@@ -221,6 +227,25 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
   <div class="fg">
     <div class="flbl">Descripción (opcional)</div>
     <textarea class="ftextarea" id="mDesc" placeholder="Notas, detalles, recordatorios..."></textarea>
+  </div>
+
+  <div class="fg">
+    <div class="flbl">Horario (opcional)</div>
+    <div class="frow">
+      <input class="finput" id="mHourS" type="time" placeholder="Inicio">
+      <span>–</span>
+      <input class="finput" id="mHourE" type="time" placeholder="Fin">
+    </div>
+  </div>
+
+  <div class="fg">
+    <div class="flbl">Prioridad manual</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="ord-btn" id="mOrdUp" title="Subir">↑</button>
+      <span id="mOrdVal" style="font-size:12px;color:var(--t2);min-width:60px;text-align:center">Sin orden</span>
+      <button class="ord-btn" id="mOrdDown" title="Bajar">↓</button>
+    </div>
+    <p class="note">Sin horario, las barras se ordenan por este valor. Con horario, el horario tiene prioridad.</p>
   </div>
 
   <!-- PERIOD SECTION -->
@@ -581,6 +606,7 @@ function render(){
     cell.className='day';
     if(!inMonth(day)) cell.classList.add('dim');
     if(dy===todayY)   cell.classList.add('today');
+    if(dy<todayY&&inMonth(day)) cell.classList.add('past');
     if(selA&&dy>=selA&&dy<=selB) cell.classList.add('sel');
 
     // day number
@@ -655,10 +681,10 @@ function paintBands(days, ymdIdx, grid, rows, winS, winE){
     return 0;
   }
 
-  function makeBand(x,y,w,col,bg,label,elId,isFirst,isLast,desc,isKeydate){
+  function makeBand(x,y,w,col,bg,label,elId,isFirst,isLast,desc,isKeydate,isPast){
     const sc=col+'88';
     const band=document.createElement('div');
-    band.className='band';
+    band.className='band'+(isPast?' past':'');
     band.style.cssText=`left:${x}px;top:${y}px;width:${w}px;height:${BAND_H}px;background:${bg};border-top:1.5px solid ${sc};border-bottom:1.5px solid ${sc};`;
     if(isFirst){band.style.borderLeft=`1.5px solid ${sc}`;band.style.borderTopLeftRadius='4px';band.style.borderBottomLeftRadius='4px';}
     if(isLast){band.style.borderRight=`1.5px solid ${sc}`;band.style.borderTopRightRadius='4px';band.style.borderBottomRightRadius='4px';}
@@ -687,6 +713,7 @@ function paintBands(days, ymdIdx, grid, rows, winS, winE){
 
   // ── 1. Collect all instances with their index range ──
   const allInsts=[];
+  const todayY2=ymd(new Date());
 
   data.elements.forEach(el=>{
     const a=AREAS.find(x=>x.id===el.area)||AREAS[0];
@@ -699,27 +726,40 @@ function paintBands(days, ymdIdx, grid, rows, winS, winE){
         const visE=inst.endYmd>weY?weY:inst.endYmd;
         const idxS=ymdIdx[visS], idxE=ymdIdx[visE];
         if(idxS==null||idxE==null)return;
-        allInsts.push({el,col,bg,idxS,idxE,type:'period'});
+        const isPast=inst.endYmd<todayY2;
+        allInsts.push({el,col,bg,idxS,idxE,type:'period',isPast});
       });
     } else if(el.type==='recurrent'){
       days.forEach((day,idx)=>{
         const dow=day.getDay();
         if(!el.days||!el.days.includes(String(dow)))return;
-        allInsts.push({el,col,bg,idxS:idx,idxE:idx,type:'recurrent'});
+        const isPast=ymd(day)<todayY2;
+        allInsts.push({el,col,bg,idxS:idx,idxE:idx,type:'recurrent',isPast});
       });
     } else if(el.type==='keydate'){
       expand(el,winS,winE).forEach(inst=>{
         const idx=ymdIdx[inst.startYmd];
         if(idx==null)return;
-        allInsts.push({el,col,bg,idxS:idx,idxE:idx,type:'keydate'});
+        const isPast=inst.startYmd<todayY2;
+        allInsts.push({el,col,bg,idxS:idx,idxE:idx,type:'keydate',isPast});
       });
     }
   });
 
-  // ── 2. Assign slots and draw ──
-  allInsts.forEach(({el,col,bg,idxS,idxE,type})=>{
+  // ── 2. Sort by: horario (timeS/hourS), luego orden manual (el.order) ──
+  function sortKey(inst){
+    const h=inst.el.hourS||inst.el.timeS||'';
+    const o=inst.el.order!=null?inst.el.order:999;
+    return h?h+'_'+String(o).padStart(4,'0'):'zzz_'+String(o).padStart(4,'0');
+  }
+  allInsts.sort((a,b)=>{
+    if(a.idxS!==b.idxS) return a.idxS-b.idxS;
+    return sortKey(a).localeCompare(sortKey(b));
+  });
+
+  // ── 3. Assign slots and draw ──
+  allInsts.forEach(({el,col,bg,idxS,idxE,type,isPast})=>{
     const slot=getSlot(idxS,idxE);
-    const a=AREAS.find(x=>x.id===el.area)||AREAS[0];
 
     if(type==='period'){
       const rowS=Math.floor(idxS/cols), rowE=Math.floor(idxE/cols);
@@ -732,21 +772,23 @@ function paintBands(days, ymdIdx, grid, rows, winS, winE){
         const w=(colE-colS+1)*cellW+(colE-colS)*gap;
         const isFirst=(row===rowS), isLast=(row===rowE);
         const showLbl=(colS===0||isFirst);
-        makeBand(x,y,w,col,bg,showLbl?el.name:null,el.id,isFirst,isLast,el.desc||null,false);
+        // show hour on first segment only
+        let lbl=el.name;
+        if(showLbl&&el.hourS) lbl+=` ${el.hourS}`;
+        makeBand(x,y,w,col,bg,showLbl?lbl:null,el.id,isFirst,isLast,el.desc||null,false,isPast);
       }
     } else {
-      // recurrent or keydate — single cell
       const row=Math.floor(idxS/cols);
       const colS=idxS%cols;
       const x=ox+colS*(cellW+gap);
       const y=oy+row*(cellH+gap)+BAND_TOP+slot*SLOT_H;
       const w=cellW;
       let label=el.name;
-      if(el.type==='recurrent'){
-        if(el.timeS) label+=' '+el.timeS;
-        if(el.timeE) label+='–'+el.timeE;
-      }
-      makeBand(x,y,w,col,bg,label,el.id,true,true,el.desc||null,type==='keydate');
+      const hs=el.hourS||el.timeS;
+      const he=el.hourE||el.timeE;
+      if(hs) label+=' '+hs;
+      if(he) label+='–'+he;
+      makeBand(x,y,w,col,bg,label,el.id,true,true,el.desc||null,type==='keydate',isPast);
     }
   });
 }
@@ -754,7 +796,7 @@ function paintBands(days, ymdIdx, grid, rows, winS, winE){
 /* ═══════════════════════════════════════════════
    MODAL
 ═══════════════════════════════════════════════ */
-let mType='period', mArea=AREAS[0]?.id||'trading', mDays=[], mEditId=null, mColor=null;
+let mType='period', mArea=AREAS[0]?.id||'trading', mDays=[], mEditId=null, mColor=null, mOrder=null;
 
 const MODAL_COLORS=[
   '#185FA5','#1A7FC1','#0EA5E9','#06B6D4','#0891B2',
@@ -789,8 +831,18 @@ function buildColorRow(){
   });
 }
 
-// tooltip
-function showTooltip(ev,text){
+function updateOrdDisplay(){
+  const el=document.getElementById('mOrdVal');
+  el.textContent=mOrder!=null?`Prioridad ${mOrder}`:'Sin orden';
+}
+document.getElementById('mOrdUp').addEventListener('click',()=>{
+  mOrder=mOrder!=null?Math.max(1,mOrder-1):1;
+  updateOrdDisplay();
+});
+document.getElementById('mOrdDown').addEventListener('click',()=>{
+  mOrder=mOrder!=null?mOrder+1:1;
+  updateOrdDisplay();
+});(ev,text){
   const t=document.getElementById('bandTooltip');
   t.textContent=text; t.style.display='block';
   moveTooltip(ev);
@@ -840,6 +892,8 @@ function clearModal(){
   document.querySelectorAll('.dtog').forEach(b=>b.classList.remove('on'));
   document.getElementById('mName').value='';
   document.getElementById('mDesc').value='';
+  document.getElementById('mHourS').value='';
+  document.getElementById('mHourE').value='';
   document.getElementById('mStart').value='';
   document.getElementById('mEnd').value='';
   document.getElementById('mKDate').value='';
@@ -849,10 +903,11 @@ function clearModal(){
   document.getElementById('mKRepeat').value='none';
   document.getElementById('mRepeatUntil').value='';
   document.getElementById('mRepeatUntilGrp').classList.add('hide');
+  updateOrdDisplay();
 }
 
 function openModal(range){
-  mEditId=null; mArea=AREAS[0]?.id||'trading'; mColor=null;
+  mEditId=null; mArea=AREAS[0]?.id||'trading'; mColor=null; mOrder=null;
   clearModal();
   if(range){
     document.getElementById('mStart').value=range.start;
@@ -869,12 +924,16 @@ function openModal(range){
 
 function openEdit(id){
   const el=data.elements.find(e=>e.id===id); if(!el)return;
-  mEditId=id; mArea=el.area; mColor=el.color||null;
-  clearModal(); // clearModal resetea mColor a null, por eso lo restauramos después
-  mColor=el.color||null; // restaurar después del clear
+  mEditId=id; mArea=el.area; mColor=el.color||null; mOrder=el.order!=null?el.order:null;
+  clearModal();
+  mColor=el.color||null;
+  mOrder=el.order!=null?el.order:null;
   mDays=el.days?[...el.days]:[];
   document.getElementById('mName').value=el.name;
   document.getElementById('mDesc').value=el.desc||'';
+  document.getElementById('mHourS').value=el.hourS||'';
+  document.getElementById('mHourE').value=el.hourE||'';
+  updateOrdDisplay();
   document.getElementById('mTitle').textContent='Editar elemento';
   document.getElementById('mDel').classList.remove('hide');
   if(el.type==='period'){
@@ -920,6 +979,11 @@ document.getElementById('mSave').addEventListener('click',()=>{
   if(mColor) el.color=mColor;
   const desc=document.getElementById('mDesc').value.trim();
   if(desc) el.desc=desc;
+  const hourS=document.getElementById('mHourS').value;
+  const hourE=document.getElementById('mHourE').value;
+  if(hourS) el.hourS=hourS;
+  if(hourE) el.hourE=hourE;
+  if(mOrder!=null) el.order=mOrder;
 
   if(mType==='period'){
     let s=document.getElementById('mStart').value;
@@ -1141,6 +1205,18 @@ function rebuildLegend(){
 // Render inmediato con localStorage — Firebase actualiza después si hay sesión
 try{const s=localStorage.getItem('ov3');if(s){const p=JSON.parse(s);data=p;}}catch(e){}
 render();
+
+// punto 3: scroll rueda del mouse — navega semana a semana
+let scrollCooldown=false;
+document.getElementById('gridWrap').addEventListener('wheel', e=>{
+  e.preventDefault();
+  if(scrollCooldown) return;
+  scrollCooldown=true;
+  setTimeout(()=>scrollCooldown=false, 300);
+  const dir=e.deltaY>0?1:-1;
+  anchor.setDate(anchor.getDate()+dir*7);
+  render();
+},{passive:false});
 
 window.addEventListener('resize', render);
 document.getElementById('addBtn').style.display = 'none';
