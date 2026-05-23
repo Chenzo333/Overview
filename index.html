@@ -544,7 +544,7 @@ function expand(el, winS, winE){
 /* ═══════════════════════════════════════════════
    DRAG STATE
 ═══════════════════════════════════════════════ */
-let dragA=null, dragB=null, dragging=false, moved=false;
+let dragA=null, dragB=null, dragging=false, moved=false, clickedEl=false;
 
 /* ═══════════════════════════════════════════════
    RENDER
@@ -605,8 +605,8 @@ function render(){
     cell.addEventListener('mouseup',e=>{
       if(!dragging)return;
       dragging=false;
+      if(clickedEl){ clickedEl=false; dragA=null;dragB=null;moved=false; return; }
       if(!moved){
-        // single click → open modal with this date
         dragA=null;dragB=null;
         openModal({start:dy,end:dy});
       } else {
@@ -621,87 +621,14 @@ function render(){
     grid.appendChild(cell);
   });
 
-  // ── paint inline items (recurrent + keydate) — misma altura que bands ──
-  const BAND_H=20, BAND_TOP=22, SLOT_H=22;
   const winS=days[0], winE=days[days.length-1];
-
-  // slot tracker compartido entre periods, recurrents y keydates
-  const slotGrid={};
-  function getSlot(idxS,idxE){
-    for(let slot=0;slot<20;slot++){
-      let free=true;
-      for(let i=idxS;i<=idxE;i++){
-        if((slotGrid[i]||[])[slot]){free=false;break;}
-      }
-      if(free){
-        for(let i=idxS;i<=idxE;i++){if(!slotGrid[i])slotGrid[i]=[];slotGrid[i][slot]=true;}
-        return slot;
-      }
-    }
-    return 0;
-  }
-
-  data.elements.forEach(el=>{
-    const instances=expand(el,winS,winE);
-    instances.forEach(inst=>{
-      if(el.type==='recurrent'){
-        days.forEach((day,idx)=>{
-          const dow=day.getDay();
-          if(!el.days||!el.days.includes(String(dow)))return;
-          const cell=grid.querySelector(`[data-ymd="${ymd(day)}"]`);
-          if(!cell)return;
-          const ci=cell.querySelector('.cell-items');
-          const slot=getSlot(idx,idx);
-          const p=document.createElement('div');p.className='pill';
-          const a=AREAS.find(x=>x.id===el.area)||AREAS[0];
-          const col=el.color||a.color;
-          const bg=el.color?colorBg(el.color):a.bg;
-          p.style.background=bg; p.style.borderLeftColor=col; p.style.color=col;
-          p.style.marginTop=(slot*SLOT_H)+'px';
-          let txt=el.name;
-          if(el.timeS) txt+=' '+el.timeS;
-          if(el.timeE) txt+='–'+el.timeE;
-          p.textContent=txt;
-          p.addEventListener('click',ev=>{ev.stopPropagation();openEdit(el.id);});
-          if(el.desc){
-            p.addEventListener('mouseenter',ev=>showTooltip(ev,el.desc));
-            p.addEventListener('mousemove',ev=>moveTooltip(ev));
-            p.addEventListener('mouseleave',hideTooltip);
-          }
-          ci.appendChild(p);
-        });
-      } else if(el.type==='keydate'){
-        const cell=grid.querySelector(`[data-ymd="${inst.startYmd}"]`);
-        if(!cell)return;
-        const ci=cell.querySelector('.cell-items');
-        const idx=ymdIdx[inst.startYmd];
-        const slot=getSlot(idx,idx);
-        const p=document.createElement('div');p.className='kpill';
-        const a=AREAS.find(x=>x.id===el.area)||AREAS[0];
-        const col=el.color||a.color;
-        const bg=el.color?colorBg(el.color):a.bg;
-        p.style.background=bg; p.style.color=col;
-        p.style.marginTop=(slot*SLOT_H)+'px';
-        p.textContent=el.name;
-        p.addEventListener('click',ev=>{ev.stopPropagation();openEdit(el.id);});
-        if(el.desc){
-          p.addEventListener('mouseenter',ev=>showTooltip(ev,el.desc));
-          p.addEventListener('mousemove',ev=>moveTooltip(ev));
-          p.addEventListener('mouseleave',hideTooltip);
-        }
-        ci.appendChild(p);
-      }
-    });
-  });
-
-  // ── paint period bands (after layout) ──
-  requestAnimationFrame(()=>paintBands(days, ymdIdx, grid, rows, winS, winE, slotGrid, BAND_H, BAND_TOP, SLOT_H));
+  requestAnimationFrame(()=>paintBands(days, ymdIdx, grid, rows, winS, winE));
 }
 
 /* ═══════════════════════════════════════════════
-   PAINT PERIOD BANDS
+   PAINT BANDS (periods + recurrent + keydate — todos absolutos, slot compartido)
 ═══════════════════════════════════════════════ */
-function paintBands(days, ymdIdx, grid, rows, winS, winE, slotGrid, BAND_H, BAND_TOP, SLOT_H){
+function paintBands(days, ymdIdx, grid, rows, winS, winE){
   const wrap=document.getElementById('gridWrap');
   wrap.querySelectorAll('.band').forEach(b=>b.remove());
 
@@ -712,65 +639,114 @@ function paintBands(days, ymdIdx, grid, rows, winS, winE, slotGrid, BAND_H, BAND
   const cellW=(gRect.width-(cols-1)*gap)/cols;
   const cellH=(gRect.height-(rows-1)*gap)/rows;
   const wsY=ymd(winS), weY=ymd(winE);
+  const BAND_H=20, BAND_TOP=22, SLOT_H=22;
 
-  const pInsts=[];
-  data.elements.forEach(el=>{
-    if(el.type!=='period')return;
-    expand(el,winS,winE).forEach(inst=>pInsts.push({el,sY:inst.startYmd,eY:inst.endYmd}));
-  });
-
-  pInsts.forEach(({el,sY,eY})=>{
-    const visS=sY<wsY?wsY:sY;
-    const visE=eY>weY?weY:eY;
-    const idxS=ymdIdx[visS], idxE=ymdIdx[visE];
-    if(idxS==null||idxE==null)return;
-
-    // use shared slotGrid
-    let slot=0;
-    outer:for(slot=0;slot<20;slot++){
-      for(let i=idxS;i<=idxE;i++){
-        if((slotGrid[i]||[])[slot]) continue outer;
+  // slot grid compartido para TODOS los elementos
+  const slotGrid={};
+  function getSlot(idxS,idxE){
+    for(let slot=0;slot<20;slot++){
+      let free=true;
+      for(let i=idxS;i<=idxE;i++){if((slotGrid[i]||[])[slot]){free=false;break;}}
+      if(free){
+        for(let i=idxS;i<=idxE;i++){if(!slotGrid[i])slotGrid[i]=[];slotGrid[i][slot]=true;}
+        return slot;
       }
-      break;
     }
-    for(let i=idxS;i<=idxE;i++){if(!slotGrid[i])slotGrid[i]=[];slotGrid[i][slot]=true;}
+    return 0;
+  }
 
+  function makeBand(x,y,w,col,bg,label,elId,isFirst,isLast,desc,isKeydate){
+    const sc=col+'88';
+    const band=document.createElement('div');
+    band.className='band';
+    band.style.cssText=`left:${x}px;top:${y}px;width:${w}px;height:${BAND_H}px;background:${bg};border-top:1.5px solid ${sc};border-bottom:1.5px solid ${sc};`;
+    if(isFirst){band.style.borderLeft=`1.5px solid ${sc}`;band.style.borderTopLeftRadius='4px';band.style.borderBottomLeftRadius='4px';}
+    if(isLast){band.style.borderRight=`1.5px solid ${sc}`;band.style.borderTopRightRadius='4px';band.style.borderBottomRightRadius='4px';}
+    if(label&&(isFirst||isKeydate)){
+      const lbl=document.createElement('div');
+      lbl.className='band-lbl';
+      if(isKeydate){
+        // keydate: dot + label
+        lbl.innerHTML=`<span style="width:5px;height:5px;border-radius:50%;background:${col};display:inline-block;margin-right:4px;flex-shrink:0"></span>${label}`;
+        lbl.style.display='flex';lbl.style.alignItems='center';
+      } else {
+        lbl.textContent=label;
+      }
+      lbl.style.color=col;
+      band.appendChild(lbl);
+    }
+    band.addEventListener('mousedown',ev=>{ev.stopPropagation();clickedEl=true;});
+    band.addEventListener('click',ev=>{ev.stopPropagation();openEdit(elId);});
+    if(desc){
+      band.addEventListener('mouseenter',ev=>showTooltip(ev,desc));
+      band.addEventListener('mousemove',ev=>moveTooltip(ev));
+      band.addEventListener('mouseleave',hideTooltip);
+    }
+    wrap.appendChild(band);
+  }
+
+  // ── 1. Collect all instances with their index range ──
+  const allInsts=[];
+
+  data.elements.forEach(el=>{
     const a=AREAS.find(x=>x.id===el.area)||AREAS[0];
     const col=el.color||a.color;
     const bg=el.color?colorBg(el.color):a.bg;
-    const sc=col+'88';
-    const rowS=Math.floor(idxS/cols), rowE=Math.floor(idxE/cols);
 
-    for(let row=rowS;row<=rowE;row++){
-      const segS=row===rowS?idxS:row*cols;
-      const segE=row===rowE?idxE:row*cols+cols-1;
-      const colS=segS%cols, colE=segE%cols;
+    if(el.type==='period'){
+      expand(el,winS,winE).forEach(inst=>{
+        const visS=inst.startYmd<wsY?wsY:inst.startYmd;
+        const visE=inst.endYmd>weY?weY:inst.endYmd;
+        const idxS=ymdIdx[visS], idxE=ymdIdx[visE];
+        if(idxS==null||idxE==null)return;
+        allInsts.push({el,col,bg,idxS,idxE,type:'period'});
+      });
+    } else if(el.type==='recurrent'){
+      days.forEach((day,idx)=>{
+        const dow=day.getDay();
+        if(!el.days||!el.days.includes(String(dow)))return;
+        allInsts.push({el,col,bg,idxS:idx,idxE:idx,type:'recurrent'});
+      });
+    } else if(el.type==='keydate'){
+      expand(el,winS,winE).forEach(inst=>{
+        const idx=ymdIdx[inst.startYmd];
+        if(idx==null)return;
+        allInsts.push({el,col,bg,idxS:idx,idxE:idx,type:'keydate'});
+      });
+    }
+  });
 
+  // ── 2. Assign slots and draw ──
+  allInsts.forEach(({el,col,bg,idxS,idxE,type})=>{
+    const slot=getSlot(idxS,idxE);
+    const a=AREAS.find(x=>x.id===el.area)||AREAS[0];
+
+    if(type==='period'){
+      const rowS=Math.floor(idxS/cols), rowE=Math.floor(idxE/cols);
+      for(let row=rowS;row<=rowE;row++){
+        const segS=row===rowS?idxS:row*cols;
+        const segE=row===rowE?idxE:row*cols+cols-1;
+        const colS=segS%cols, colE=segE%cols;
+        const x=ox+colS*(cellW+gap);
+        const y=oy+row*(cellH+gap)+BAND_TOP+slot*SLOT_H;
+        const w=(colE-colS+1)*cellW+(colE-colS)*gap;
+        const isFirst=(row===rowS), isLast=(row===rowE);
+        const showLbl=(colS===0||isFirst);
+        makeBand(x,y,w,col,bg,showLbl?el.name:null,el.id,isFirst,isLast,el.desc||null,false);
+      }
+    } else {
+      // recurrent or keydate — single cell
+      const row=Math.floor(idxS/cols);
+      const colS=idxS%cols;
       const x=ox+colS*(cellW+gap);
       const y=oy+row*(cellH+gap)+BAND_TOP+slot*SLOT_H;
-      const w=(colE-colS+1)*cellW+(colE-colS)*gap;
-
-      const band=document.createElement('div');
-      band.className='band';
-      band.style.cssText=`left:${x}px;top:${y}px;width:${w}px;height:${BAND_H}px;background:${bg};border-top:1.5px solid ${sc};border-bottom:1.5px solid ${sc};`;
-
-      const isFirst=(row===rowS), isLast=(row===rowE);
-      if(isFirst){band.style.borderLeft=`1.5px solid ${sc}`;band.style.borderTopLeftRadius='4px';band.style.borderBottomLeftRadius='4px';}
-      if(isLast){band.style.borderRight=`1.5px solid ${sc}`;band.style.borderTopRightRadius='4px';band.style.borderBottomRightRadius='4px';}
-
-      if(colS===0||isFirst){
-        const lbl=document.createElement('div');
-        lbl.className='band-lbl';lbl.style.color=col;lbl.textContent=el.name;
-        band.appendChild(lbl);
+      const w=cellW;
+      let label=el.name;
+      if(el.type==='recurrent'){
+        if(el.timeS) label+=' '+el.timeS;
+        if(el.timeE) label+='–'+el.timeE;
       }
-
-      band.addEventListener('click',ev=>{ev.stopPropagation();openEdit(el.id);});
-      if(el.desc){
-        band.addEventListener('mouseenter',ev=>showTooltip(ev,el.desc));
-        band.addEventListener('mousemove',ev=>moveTooltip(ev));
-        band.addEventListener('mouseleave',hideTooltip);
-      }
-      wrap.appendChild(band);
+      makeBand(x,y,w,col,bg,label,el.id,true,true,el.desc||null,type==='keydate');
     }
   });
 }
@@ -1155,12 +1131,19 @@ function rebuildLegend(){
   });
 }
 
-window.addEventListener('resize', render);
+// Render inmediato con localStorage — Firebase actualiza después si hay sesión
+try{const s=localStorage.getItem('ov3');if(s){const p=JSON.parse(s);data=p;}}catch(e){}
+render();
 
-// ocultar botón agregar hasta que haya sesión
+window.addEventListener('resize', render);
 document.getElementById('addBtn').style.display = 'none';
 
-initFirebase();
+// Firebase async — si falla (sin red, preview, etc.) el calendario igual funciona
+initFirebase().catch(e => {
+  console.warn('Firebase no disponible:', e);
+  // mostrar botón nuevo igual con datos locales
+  document.getElementById('addBtn').style.display = 'flex';
+});
 
 // ── LOGO con binoculares pegados al texto ──
 function buildLogo(){
