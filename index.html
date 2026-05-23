@@ -29,16 +29,14 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .z-btn.on{background:var(--surface);color:var(--t1);box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .z-btn:hover:not(.on){color:var(--t1)}
 .hdr-r{display:flex;align-items:center;gap:8px}
-.legend{display:flex;align-items:center;gap:3px}
-.leg-item{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:500;user-select:none}
-.leg-dot{width:6px;height:6px;border-radius:50%}
 .add-btn{display:flex;align-items:center;gap:5px;padding:5px 14px;background:var(--t1);color:#fff;border:none;border-radius:7px;font-family:var(--font);font-size:12px;font-weight:500;cursor:pointer;transition:opacity .15s}
 .add-btn:hover{opacity:.82}
 
 /* ── CALENDAR ── */
 .cal-wrap{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:12px 16px 10px;gap:6px}
 .day-hdrs{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--gap);flex-shrink:0}
-.day-hdr{text-align:center;font-size:10px;font-weight:500;color:var(--t3);letter-spacing:.07em;text-transform:uppercase;padding-bottom:2px}
+/* punto 4: día de semana más oscuro */
+.day-hdr{text-align:center;font-size:11px;font-weight:500;color:#6b6860;letter-spacing:.04em;text-transform:uppercase;padding-bottom:3px}
 .grid-wrap{flex:1;position:relative;min-height:0}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--gap);width:100%;height:100%;position:relative}
 
@@ -47,28 +45,32 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .day:hover{border-color:var(--border-md)}
 .day.dim{background:transparent;border-color:transparent}
 .day.dim .dnum{color:var(--t3)}
-.day.today{border-color:#185FA5}
-.day.today .dnum{color:#185FA5;font-weight:600}
+/* punto 6: hoy mucho más evidente */
+.day.today{border-color:#185FA5;border-width:2px;background:rgba(24,95,165,.03)}
+.day.today .dnum{color:#fff;font-weight:700;background:#185FA5;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px}
 .day.sel{background:rgba(24,95,165,.06);border-color:rgba(24,95,165,.3)}
 .dnum{font-size:11px;font-weight:400;color:var(--t2);line-height:1;flex-shrink:0;position:relative;z-index:1}
-.cell-items{display:flex;flex-direction:column;gap:1px;margin-top:2px;overflow:hidden;position:relative;z-index:1}
+.cell-items{display:flex;flex-direction:column;gap:2px;margin-top:4px;overflow:hidden;position:relative;z-index:1}
 
-/* ── INLINE PILLS (recurrent + keydate) ── */
-.pill{border-radius:3px;padding:1px 5px;font-size:9px;font-weight:500;line-height:1.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:2px solid transparent;cursor:pointer}
+/* punto 2/8/10: pills y bandas misma altura, texto legible */
+.pill{border-radius:4px;padding:2px 6px;font-size:10px;font-weight:500;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:2.5px solid transparent;cursor:pointer;height:20px;display:flex;align-items:center}
 .pill:hover{opacity:.75}
-.kpill{display:flex;align-items:center;gap:3px;font-size:9px;font-weight:500;padding:1px 4px;border-radius:3px;cursor:pointer;white-space:nowrap;overflow:hidden}
-.kpill::before{content:'';width:4px;height:4px;border-radius:50%;background:currentColor;flex-shrink:0}
+.kpill{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:500;padding:2px 6px;border-radius:4px;cursor:pointer;white-space:nowrap;overflow:hidden;height:20px}
+.kpill::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0}
 .kpill:hover{opacity:.75}
 
-/* ── PERIOD BANDS (absolute, over grid) ── */
-.band{position:absolute;height:16px;cursor:pointer;z-index:20;display:flex;align-items:center;pointer-events:auto;transition:opacity .12s}
+/* ── PERIOD BANDS ── */
+.band{position:absolute;cursor:pointer;z-index:20;display:flex;align-items:center;pointer-events:auto;transition:opacity .12s;height:20px}
 .band:hover{opacity:.8}
-.band-lbl{font-size:9px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px;color:inherit;pointer-events:none}
+.band-lbl{font-size:10px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 7px;color:inherit;pointer-events:none}
+
+/* punto 9: tooltip descripción */
+.band-tooltip{position:fixed;background:#1a1917;color:#fff;font-size:11px;padding:6px 10px;border-radius:7px;pointer-events:none;z-index:999;max-width:220px;line-height:1.4;box-shadow:0 4px 12px rgba(0,0,0,.2);display:none}
 
 /* ── MODAL ── */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.22);z-index:200;align-items:center;justify-content:center}
 .overlay.open{display:flex}
-.modal{background:var(--surface);border-radius:14px;padding:22px;width:400px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 48px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:14px}
+.modal{background:var(--surface);border-radius:14px;padding:22px;width:420px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 48px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:14px}
 .modal-title{font-size:14px;font-weight:500}
 .tabs{display:flex;gap:3px;background:var(--bg);border-radius:7px;padding:3px}
 .tab{flex:1;padding:5px;border:none;border-radius:5px;background:transparent;font-family:var(--font);font-size:11px;font-weight:500;color:var(--t2);cursor:pointer;transition:all .12s}
@@ -77,6 +79,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .flbl{font-size:10px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.07em}
 .finput{padding:7px 9px;border:1px solid var(--border-md);border-radius:7px;font-family:var(--font);font-size:12px;color:var(--t1);background:var(--bg);outline:none;width:100%;transition:border-color .12s}
 .finput:focus{border-color:#185FA5}
+.ftextarea{padding:7px 9px;border:1px solid var(--border-md);border-radius:7px;font-family:var(--font);font-size:12px;color:var(--t1);background:var(--bg);outline:none;width:100%;resize:vertical;min-height:60px;transition:border-color .12s}
+.ftextarea:focus{border-color:#185FA5}
 .fsel{padding:7px 9px;border:1px solid var(--border-md);border-radius:7px;font-family:var(--font);font-size:12px;color:var(--t1);background:var(--bg);outline:none;width:100%;cursor:pointer}
 .fsel:focus{border-color:#185FA5}
 .frow{display:flex;gap:6px;align-items:center}
@@ -85,6 +89,11 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .area-opts{display:flex;gap:5px;flex-wrap:wrap}
 .aopt{padding:4px 11px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1.5px solid transparent;transition:all .12s;user-select:none}
 .aopt.on{border-color:currentColor}
+/* punto 5: selector de color individual */
+.color-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px}
+.color-chip{width:18px;height:18px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .1s,border-color .1s;flex-shrink:0}
+.color-chip:hover{transform:scale(1.15)}
+.color-chip.picked{border-color:#1a1917;transform:scale(1.1)}
 .dow-row{display:flex;gap:3px}
 .dtog{flex:1;padding:5px 2px;border:1px solid var(--border-md);border-radius:5px;background:transparent;font-family:var(--mono);font-size:10px;color:var(--t2);cursor:pointer;text-align:center;transition:all .12s}
 .dtog.on{border-color:#185FA5;background:#E6F1FB;color:#185FA5}
@@ -153,7 +162,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
     <button class="z-btn" data-z="1w">1 sem</button>
   </div>
   <div class="hdr-r">
-    <div class="legend" id="legend"></div>
     <button class="add-btn" id="addBtn">＋ Nuevo</button>
     <button class="settings-btn" id="settingsBtn" title="Configuración">
       <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
@@ -181,6 +189,9 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
   </div>
 </div>
 
+<!-- TOOLTIP -->
+<div class="band-tooltip" id="bandTooltip"></div>
+
 <!-- MODAL -->
 <div class="overlay" id="overlay">
 <div class="modal">
@@ -200,6 +211,16 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
   <div class="fg">
     <div class="flbl">Área</div>
     <div class="area-opts" id="areaOpts"></div>
+  </div>
+
+  <div class="fg">
+    <div class="flbl">Color personalizado (opcional)</div>
+    <div class="color-row" id="mColorRow"></div>
+  </div>
+
+  <div class="fg">
+    <div class="flbl">Descripción (opcional)</div>
+    <textarea class="ftextarea" id="mDesc" placeholder="Notas, detalles, recordatorios..."></textarea>
   </div>
 
   <!-- PERIOD SECTION -->
@@ -495,12 +516,20 @@ function expand(el, winS, winE){
     }
   } else if(rep==='monthly'){
     const sd=orig.getDate();
+    const origDur=Math.round((fromYmd(baseE)-fromYmd(baseS))/864e5);
     let yr=winS.getFullYear(), mo=winS.getMonth()-2;
     for(let i=0;i<48;i++){
       mo++; if(mo>11){mo=0;yr++;}
-      const cs=new Date(yr,mo,sd);
+      // clamp start day to last day of month (punto 7)
+      const daysInMonth=new Date(yr,mo+1,0).getDate();
+      const clampedSd=Math.min(sd,daysInMonth);
+      const cs=new Date(yr,mo,clampedSd);
+      // clamp end to last day of month
+      const ce=addD(cs,origDur);
+      const lastOfMonth=new Date(yr,mo+1,0);
+      const ceC=ce>lastOfMonth?lastOfMonth:ce;
       if(ymd(cs)>until) break;
-      tryPush(cs, addD(cs,dur));
+      tryPush(cs,ceC);
     }
   } else if(rep==='yearly'){
     for(let yr=winS.getFullYear()-1;yr<=winE.getFullYear()+1;yr++){
@@ -592,51 +621,87 @@ function render(){
     grid.appendChild(cell);
   });
 
-  // ── paint inline items (recurrent + keydate) ──
+  // ── paint inline items (recurrent + keydate) — misma altura que bands ──
+  const BAND_H=20, BAND_TOP=22, SLOT_H=22;
   const winS=days[0], winE=days[days.length-1];
+
+  // slot tracker compartido entre periods, recurrents y keydates
+  const slotGrid={};
+  function getSlot(idxS,idxE){
+    for(let slot=0;slot<20;slot++){
+      let free=true;
+      for(let i=idxS;i<=idxE;i++){
+        if((slotGrid[i]||[])[slot]){free=false;break;}
+      }
+      if(free){
+        for(let i=idxS;i<=idxE;i++){if(!slotGrid[i])slotGrid[i]=[];slotGrid[i][slot]=true;}
+        return slot;
+      }
+    }
+    return 0;
+  }
 
   data.elements.forEach(el=>{
     const instances=expand(el,winS,winE);
     instances.forEach(inst=>{
       if(el.type==='recurrent'){
-        days.forEach(day=>{
-          const dow=day.getDay(); // 0=Sun
+        days.forEach((day,idx)=>{
+          const dow=day.getDay();
           if(!el.days||!el.days.includes(String(dow)))return;
           const cell=grid.querySelector(`[data-ymd="${ymd(day)}"]`);
           if(!cell)return;
           const ci=cell.querySelector('.cell-items');
+          const slot=getSlot(idx,idx);
           const p=document.createElement('div');p.className='pill';
           const a=AREAS.find(x=>x.id===el.area)||AREAS[0];
-          p.style.background=a.bg; p.style.borderLeftColor=a.color; p.style.color=a.color;
+          const col=el.color||a.color;
+          const bg=el.color?colorBg(el.color):a.bg;
+          p.style.background=bg; p.style.borderLeftColor=col; p.style.color=col;
+          p.style.marginTop=(slot*SLOT_H)+'px';
           let txt=el.name;
           if(el.timeS) txt+=' '+el.timeS;
           if(el.timeE) txt+='–'+el.timeE;
           p.textContent=txt;
           p.addEventListener('click',ev=>{ev.stopPropagation();openEdit(el.id);});
+          if(el.desc){
+            p.addEventListener('mouseenter',ev=>showTooltip(ev,el.desc));
+            p.addEventListener('mousemove',ev=>moveTooltip(ev));
+            p.addEventListener('mouseleave',hideTooltip);
+          }
           ci.appendChild(p);
         });
       } else if(el.type==='keydate'){
         const cell=grid.querySelector(`[data-ymd="${inst.startYmd}"]`);
         if(!cell)return;
         const ci=cell.querySelector('.cell-items');
+        const idx=ymdIdx[inst.startYmd];
+        const slot=getSlot(idx,idx);
         const p=document.createElement('div');p.className='kpill';
         const a=AREAS.find(x=>x.id===el.area)||AREAS[0];
-        p.style.background=a.bg; p.style.color=a.color;
+        const col=el.color||a.color;
+        const bg=el.color?colorBg(el.color):a.bg;
+        p.style.background=bg; p.style.color=col;
+        p.style.marginTop=(slot*SLOT_H)+'px';
         p.textContent=el.name;
         p.addEventListener('click',ev=>{ev.stopPropagation();openEdit(el.id);});
+        if(el.desc){
+          p.addEventListener('mouseenter',ev=>showTooltip(ev,el.desc));
+          p.addEventListener('mousemove',ev=>moveTooltip(ev));
+          p.addEventListener('mouseleave',hideTooltip);
+        }
         ci.appendChild(p);
       }
     });
   });
 
   // ── paint period bands (after layout) ──
-  requestAnimationFrame(()=>paintBands(days, ymdIdx, grid, rows, winS, winE));
+  requestAnimationFrame(()=>paintBands(days, ymdIdx, grid, rows, winS, winE, slotGrid, BAND_H, BAND_TOP, SLOT_H));
 }
 
 /* ═══════════════════════════════════════════════
    PAINT PERIOD BANDS
 ═══════════════════════════════════════════════ */
-function paintBands(days, ymdIdx, grid, rows, winS, winE){
+function paintBands(days, ymdIdx, grid, rows, winS, winE, slotGrid, BAND_H, BAND_TOP, SLOT_H){
   const wrap=document.getElementById('gridWrap');
   wrap.querySelectorAll('.band').forEach(b=>b.remove());
 
@@ -644,47 +709,36 @@ function paintBands(days, ymdIdx, grid, rows, winS, winE){
   const wRect=wrap.getBoundingClientRect();
   const ox=gRect.left-wRect.left, oy=gRect.top-wRect.top;
   const cols=7, gap=5;
-  const cellW=(gRect.width -(cols-1)*gap)/cols;
+  const cellW=(gRect.width-(cols-1)*gap)/cols;
   const cellH=(gRect.height-(rows-1)*gap)/rows;
+  const wsY=ymd(winS), weY=ymd(winE);
 
-  // collect period instances
   const pInsts=[];
   data.elements.forEach(el=>{
     if(el.type!=='period')return;
-    expand(el,winS,winE).forEach(inst=>{
-      pInsts.push({el, sY:inst.startYmd, eY:inst.endYmd});
-    });
+    expand(el,winS,winE).forEach(inst=>pInsts.push({el,sY:inst.startYmd,eY:inst.endYmd}));
   });
-
-  // clamp to visible window
-  const wsY=ymd(winS), weY=ymd(winE);
-
-  // slot allocation: slotGrid[dayIdx] = array of booleans
-  const slotGrid={};
-  function getSlot(idxS,idxE){
-    for(let slot=0;slot<20;slot++){
-      let free=true;
-      for(let i=idxS;i<=idxE;i++){
-        if(!slotGrid[i]) slotGrid[i]=[];
-        if(slotGrid[i][slot]){free=false;break;}
-      }
-      if(free){
-        for(let i=idxS;i<=idxE;i++) slotGrid[i][slot]=true;
-        return slot;
-      }
-    }
-    return 0;
-  }
 
   pInsts.forEach(({el,sY,eY})=>{
     const visS=sY<wsY?wsY:sY;
     const visE=eY>weY?weY:eY;
     const idxS=ymdIdx[visS], idxE=ymdIdx[visE];
-    if(idxS==null||idxE==null) return;
+    if(idxS==null||idxE==null)return;
 
-    const slot=getSlot(idxS,idxE);
+    // use shared slotGrid
+    let slot=0;
+    outer:for(slot=0;slot<20;slot++){
+      for(let i=idxS;i<=idxE;i++){
+        if((slotGrid[i]||[])[slot]) continue outer;
+      }
+      break;
+    }
+    for(let i=idxS;i<=idxE;i++){if(!slotGrid[i])slotGrid[i]=[];slotGrid[i][slot]=true;}
+
     const a=AREAS.find(x=>x.id===el.area)||AREAS[0];
-    const bandH=22, bandTop=18, slotGap=24; // band height and slot spacing
+    const col=el.color||a.color;
+    const bg=el.color?colorBg(el.color):a.bg;
+    const sc=col+'88';
     const rowS=Math.floor(idxS/cols), rowE=Math.floor(idxE/cols);
 
     for(let row=rowS;row<=rowE;row++){
@@ -693,35 +747,29 @@ function paintBands(days, ymdIdx, grid, rows, winS, winE){
       const colS=segS%cols, colE=segE%cols;
 
       const x=ox+colS*(cellW+gap);
-      const y=oy+row*(cellH+gap)+bandTop+slot*slotGap;
+      const y=oy+row*(cellH+gap)+BAND_TOP+slot*SLOT_H;
       const w=(colE-colS+1)*cellW+(colE-colS)*gap;
 
       const band=document.createElement('div');
       band.className='band';
-      band.style.left=x+'px';
-      band.style.top=y+'px';
-      band.style.width=w+'px';
-      band.style.height=bandH+'px';
-      band.style.background=a.bg;
-      const sc=a.color+'66';
-      band.style.borderTop=`1.5px solid ${sc}`;
-      band.style.borderBottom=`1.5px solid ${sc}`;
+      band.style.cssText=`left:${x}px;top:${y}px;width:${w}px;height:${BAND_H}px;background:${bg};border-top:1.5px solid ${sc};border-bottom:1.5px solid ${sc};`;
 
-      const isFirst=(row===rowS);
-      const isLast=(row===rowE);
-      if(isFirst){band.style.borderLeft=`1.5px solid ${sc}`;band.style.borderTopLeftRadius='5px';band.style.borderBottomLeftRadius='5px';}
-      if(isLast){band.style.borderRight=`1.5px solid ${sc}`;band.style.borderTopRightRadius='5px';band.style.borderBottomRightRadius='5px';}
+      const isFirst=(row===rowS), isLast=(row===rowE);
+      if(isFirst){band.style.borderLeft=`1.5px solid ${sc}`;band.style.borderTopLeftRadius='4px';band.style.borderBottomLeftRadius='4px';}
+      if(isLast){band.style.borderRight=`1.5px solid ${sc}`;band.style.borderTopRightRadius='4px';band.style.borderBottomRightRadius='4px';}
 
-      // label on first segment of each row
       if(colS===0||isFirst){
         const lbl=document.createElement('div');
-        lbl.className='band-lbl';
-        lbl.style.color=a.color;
-        lbl.textContent=el.name;
+        lbl.className='band-lbl';lbl.style.color=col;lbl.textContent=el.name;
         band.appendChild(lbl);
       }
 
       band.addEventListener('click',ev=>{ev.stopPropagation();openEdit(el.id);});
+      if(el.desc){
+        band.addEventListener('mouseenter',ev=>showTooltip(ev,el.desc));
+        band.addEventListener('mousemove',ev=>moveTooltip(ev));
+        band.addEventListener('mouseleave',hideTooltip);
+      }
       wrap.appendChild(band);
     }
   });
@@ -730,14 +778,59 @@ function paintBands(days, ymdIdx, grid, rows, winS, winE){
 /* ═══════════════════════════════════════════════
    MODAL
 ═══════════════════════════════════════════════ */
-let mType='period', mArea='trading', mDays=[], mEditId=null;
+let mType='period', mArea=AREAS[0]?.id||'trading', mDays=[], mEditId=null, mColor=null;
+
+const MODAL_COLORS=[
+  '#185FA5','#534AB7','#0F6E56','#854F0B','#3B6D11','#993C1D','#993556',
+  '#C0392B','#E67E22','#27AE60','#16A085','#8E44AD','#2C3E50',
+  '#D35400','#1ABC9C','#2980B9','#6C3483','#1E8449','#B7950B','#7F8C8D'
+];
+
+function buildColorRow(){
+  const row=document.getElementById('mColorRow');
+  row.innerHTML='';
+  // opción "default" (del área)
+  const def=document.createElement('div');
+  def.className='color-chip'+(mColor===null?' picked':'');
+  def.style.background='#e0ddd8';def.style.borderColor=mColor===null?'#1a1917':'transparent';
+  def.title='Color del área';
+  def.textContent='';
+  def.style.display='flex';def.style.alignItems='center';def.style.justifyContent='center';
+  def.style.fontSize='10px';def.style.color='#888';def.style.fontWeight='bold';
+  def.innerHTML='<span style="font-size:8px;color:#888">auto</span>';
+  def.style.width='22px';def.style.height='22px';
+  def.addEventListener('click',()=>{mColor=null;buildColorRow();});
+  row.appendChild(def);
+  MODAL_COLORS.forEach(c=>{
+    const sw=document.createElement('div');
+    sw.className='color-chip'+(mColor===c?' picked':'');
+    sw.style.background=c;
+    sw.addEventListener('click',()=>{mColor=c;buildColorRow();});
+    row.appendChild(sw);
+  });
+}
+
+// tooltip
+function showTooltip(ev,text){
+  const t=document.getElementById('bandTooltip');
+  t.textContent=text; t.style.display='block';
+  moveTooltip(ev);
+}
+function moveTooltip(ev){
+  const t=document.getElementById('bandTooltip');
+  t.style.left=(ev.clientX+14)+'px';
+  t.style.top=(ev.clientY-8)+'px';
+}
+function hideTooltip(){
+  document.getElementById('bandTooltip').style.display='none';
+}
 
 function buildAreaOpts(){
   const c=document.getElementById('areaOpts');c.innerHTML='';
   AREAS.forEach(a=>{
     const o=document.createElement('div');o.className='aopt'+(mArea===a.id?' on':'');
     o.style.background=a.bg;o.style.color=a.color;o.textContent=a.label;
-    o.onclick=()=>{mArea=a.id;buildAreaOpts();};
+    o.onclick=()=>{mArea=a.id;buildAreaOpts();buildColorRow();};
     c.appendChild(o);
   });
 }
@@ -764,9 +857,10 @@ document.querySelectorAll('.dtog').forEach(b=>{
 });
 
 function clearModal(){
-  mDays=[];
+  mDays=[]; mColor=null;
   document.querySelectorAll('.dtog').forEach(b=>b.classList.remove('on'));
   document.getElementById('mName').value='';
+  document.getElementById('mDesc').value='';
   document.getElementById('mStart').value='';
   document.getElementById('mEnd').value='';
   document.getElementById('mKDate').value='';
@@ -779,7 +873,7 @@ function clearModal(){
 }
 
 function openModal(range){
-  mEditId=null; mArea='trading';
+  mEditId=null; mArea=AREAS[0]?.id||'trading'; mColor=null;
   clearModal();
   if(range){
     document.getElementById('mStart').value=range.start;
@@ -788,7 +882,7 @@ function openModal(range){
   }
   document.getElementById('mTitle').textContent='Nuevo elemento';
   document.getElementById('mDel').classList.add('hide');
-  setTab('period'); buildAreaOpts();
+  setTab('period'); buildAreaOpts(); buildColorRow();
   document.getElementById('overlay').classList.add('open');
   setTimeout(()=>document.getElementById('mName').focus(),50);
   render();
@@ -796,10 +890,11 @@ function openModal(range){
 
 function openEdit(id){
   const el=data.elements.find(e=>e.id===id); if(!el)return;
-  mEditId=id; mArea=el.area;
+  mEditId=id; mArea=el.area; mColor=el.color||null;
   clearModal();
   mDays=el.days?[...el.days]:[];
   document.getElementById('mName').value=el.name;
+  document.getElementById('mDesc').value=el.desc||'';
   document.getElementById('mTitle').textContent='Editar elemento';
   document.getElementById('mDel').classList.remove('hide');
   if(el.type==='period'){
@@ -816,7 +911,7 @@ function openEdit(id){
     document.getElementById('mKDate').value=el.date||'';
     document.getElementById('mKRepeat').value=el.repeat||'none';
   }
-  setTab(el.type); buildAreaOpts();
+  setTab(el.type); buildAreaOpts(); buildColorRow();
   document.getElementById('overlay').classList.add('open');
   setTimeout(()=>document.getElementById('mName').focus(),50);
 }
@@ -842,6 +937,9 @@ document.getElementById('mSave').addEventListener('click',()=>{
   if(!name){document.getElementById('mName').focus();return;}
 
   const el={id:mEditId||data.nid++, name, area:mArea, type:mType};
+  if(mColor) el.color=mColor;
+  const desc=document.getElementById('mDesc').value.trim();
+  if(desc) el.desc=desc;
 
   if(mType==='period'){
     let s=document.getElementById('mStart').value;
@@ -1046,12 +1144,13 @@ document.getElementById('settingsPanel').addEventListener('click', e => {
 
 // rebuild legend dinámica
 function rebuildLegend(){
-  const leg = document.getElementById('legend');
-  leg.innerHTML = '';
-  AREAS.forEach(a => {
-    const d = document.createElement('div'); d.className = 'leg-item';
-    d.style.background = a.bg; d.style.color = a.color;
-    d.innerHTML = `<span class="leg-dot" style="background:${a.color}"></span>${a.label}`;
+  const leg=document.getElementById('legend');
+  if(!leg) return;
+  leg.innerHTML='';
+  AREAS.forEach(a=>{
+    const d=document.createElement('div');d.className='leg-item';
+    d.style.background=a.bg;d.style.color=a.color;
+    d.innerHTML=`<span class="leg-dot" style="background:${a.color}"></span>${a.label}`;
     leg.appendChild(d);
   });
 }
