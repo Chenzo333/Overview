@@ -842,7 +842,10 @@ document.getElementById('mOrdUp').addEventListener('click',()=>{
 document.getElementById('mOrdDown').addEventListener('click',()=>{
   mOrder=mOrder!=null?mOrder+1:1;
   updateOrdDisplay();
-});(ev,text){
+});
+
+// tooltip
+function showTooltip(ev,text){
   const t=document.getElementById('bandTooltip');
   t.textContent=text; t.style.display='block';
   moveTooltip(ev);
