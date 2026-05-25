@@ -110,6 +110,13 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 /* punto 1: pasado difuminado */
 .day.past{opacity:0.45}
 .band.past{opacity:0.38}
+/* cambio de mes */
+.day.prev-month{background:rgba(0,0,0,.018)}
+.day.new-month{border-left:2.5px solid #185FA5 !important}
+.day.new-month .dnum{color:#185FA5;font-weight:600}
+.month-start-lbl{font-size:8px;font-weight:600;color:#185FA5;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:3px;line-height:1}
+/* separador horizontal entre semanas */
+.week-sep{grid-column:1/-1;height:1.5px;background:linear-gradient(to right,transparent,rgba(0,0,0,.1) 15%,rgba(0,0,0,.1) 85%,transparent);flex-shrink:0;align-self:center}
 /* punto 2: botones de orden */
 .ord-btn{width:26px;height:26px;border:1px solid var(--border-md);border-radius:6px;background:transparent;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t2);transition:all .1s}
 .ord-btn:hover{background:var(--bg);color:var(--t1)}
@@ -579,10 +586,13 @@ function render(){
     const d=document.createElement('div');d.className='day-hdr';d.textContent=n;hdrEl.appendChild(d);
   });
 
-  // grid
+  // grid — rows incluyen separadores de 2px entre semanas
   const grid=document.getElementById('grid');
   grid.innerHTML='';
-  grid.style.gridTemplateRows=`repeat(${rows},1fr)`;
+  // construir template: semana 1fr, sep 6px, semana 1fr, sep 6px...
+  const rowParts=[];
+  for(let r=0;r<rows;r++){rowParts.push('1fr');if(r<rows-1)rowParts.push('6px');}
+  grid.style.gridTemplateRows=rowParts.join(' ');
 
   const ymdIdx={}; // ymd → index
   days.forEach((d,i)=>ymdIdx[ymd(d)]=i);
@@ -591,18 +601,49 @@ function render(){
   let selA=null,selB=null;
   if(dragA&&dragB){selA=dragA<dragB?dragA:dragB; selB=dragA<dragB?dragB:dragA;}
 
-  // build cells
+  // build cells — insertar separador al inicio de cada semana (excepto la primera)
   days.forEach((day,idx)=>{
+    // separador entre semanas
+    if(idx>0 && idx%7===0){
+      const sep=document.createElement('div');
+      sep.className='week-sep';
+      grid.appendChild(sep);
+    }
+
     const dy=ymd(day);
     const cell=document.createElement('div');
     cell.className='day';
-    if(!inMonth(day)) cell.classList.add('dim');
+
+    // detectar cambio de mes
+    const prevDay=idx>0?days[idx-1]:null;
+    const isNewMonth=prevDay&&day.getMonth()!==prevDay.getMonth();
+    const isPrevMonth=prevDay&&!isNewMonth&&day.getMonth()!==days[Math.min(idx+6-(idx%7),days.length-1)].getMonth()&&false;
+
+    // marcar días del mes que termina (antes del cambio)
+    // buscar en qué mes está la mayoría de la semana actual
+    const weekStart=days[idx-idx%7];
+    const weekEnd=days[Math.min(idx-idx%7+6,days.length-1)];
+    const mainMonth=weekStart.getMonth()!==weekEnd.getMonth()?
+      (weekStart.getMonth()===days[Math.floor(days.length/2)].getMonth()?weekStart.getMonth():weekEnd.getMonth()):
+      weekStart.getMonth();
+
+    if(day.getMonth()!==mainMonth && !isNewMonth){
+      cell.classList.add('prev-month');
+    }
+    if(isNewMonth) cell.classList.add('new-month');
     if(dy===todayY)   cell.classList.add('today');
-    if(dy<todayY&&inMonth(day)) cell.classList.add('past');
+    if(dy<todayY) cell.classList.add('past');
     if(selA&&dy>=selA&&dy<=selB) cell.classList.add('sel');
 
     // day number
-    const dn=document.createElement('div');dn.className='dnum';dn.textContent=day.getDate();
+    const dn=document.createElement('div');dn.className='dnum';
+    if(isNewMonth){
+      const mlbl=document.createElement('span');
+      mlbl.className='month-start-lbl';
+      mlbl.textContent=MONTHS[day.getMonth()].substring(0,3).toUpperCase();
+      cell.appendChild(mlbl);
+    }
+    dn.textContent=day.getDate();
     cell.appendChild(dn);
 
     // items container
