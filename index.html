@@ -112,11 +112,11 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .band.past{opacity:0.38}
 /* cambio de mes */
 .day.prev-month{background:rgba(0,0,0,.018)}
-.day.new-month{border-left:2.5px solid #185FA5 !important}
-.day.new-month .dnum{color:#185FA5;font-weight:600}
-.month-start-lbl{font-size:8px;font-weight:600;color:#185FA5;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:3px;line-height:1}
-/* separador horizontal entre semanas */
-.week-sep{grid-column:1/-1;height:1.5px;background:linear-gradient(to right,transparent,rgba(0,0,0,.1) 15%,rgba(0,0,0,.1) 85%,transparent);flex-shrink:0;align-self:center}
+.day.new-month{border-left:3.5px solid #185FA5 !important;border-radius:0 10px 10px 0 !important}
+.day.new-month .dnum{color:#185FA5;font-weight:700}
+.month-start-lbl{font-size:10px;font-weight:700;color:#185FA5;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px;line-height:1}
+/* separador solo en cambio de mes */
+.month-sep{grid-column:1/-1;height:2px;background:linear-gradient(to right,#185FA5 0%,rgba(24,95,165,.15) 60%,transparent 100%);flex-shrink:0}
 /* punto 2: botones de orden */
 .ord-btn{width:26px;height:26px;border:1px solid var(--border-md);border-radius:6px;background:transparent;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t2);transition:all .1s}
 .ord-btn:hover{background:var(--bg);color:var(--t1)}
@@ -586,27 +586,40 @@ function render(){
     const d=document.createElement('div');d.className='day-hdr';d.textContent=n;hdrEl.appendChild(d);
   });
 
-  // grid — rows incluyen separadores de 2px entre semanas
-  const grid=document.getElementById('grid');
-  grid.innerHTML='';
-  // construir template: semana 1fr, sep 6px, semana 1fr, sep 6px...
-  const rowParts=[];
-  for(let r=0;r<rows;r++){rowParts.push('1fr');if(r<rows-1)rowParts.push('6px');}
-  grid.style.gridTemplateRows=rowParts.join(' ');
-
-  const ymdIdx={}; // ymd → index
+  // ymd index
+  const ymdIdx={};
   days.forEach((d,i)=>ymdIdx[ymd(d)]=i);
 
-  // selection range
+  // detectar en qué semanas (row index) hay cambio de mes
+  const monthChangeSepRows=new Set();
+  for(let r=1;r<rows;r++){
+    for(let d=r*7;d<Math.min(r*7+7,days.length);d++){
+      if(d>0&&days[d].getMonth()!==days[d-1].getMonth()) monthChangeSepRows.add(r);
+    }
+  }
+
+  // grid — solo insertar fila extra (8px) donde hay cambio de mes
+  const grid=document.getElementById('grid');
+  grid.innerHTML='';
+  const rowParts=[];
+  for(let r=0;r<rows;r++){
+    if(r>0&&monthChangeSepRows.has(r)) rowParts.push('8px');
+    rowParts.push('1fr');
+  }
+  grid.style.gridTemplateRows=rowParts.join(' ');
+  grid.style.gridTemplateColumns='repeat(7,1fr)';
+
   let selA=null,selB=null;
   if(dragA&&dragB){selA=dragA<dragB?dragA:dragB; selB=dragA<dragB?dragB:dragA;}
 
-  // build cells — insertar separador al inicio de cada semana (excepto la primera)
+  // build cells
   days.forEach((day,idx)=>{
-    // separador entre semanas
-    if(idx>0 && idx%7===0){
+    const rowIdx=Math.floor(idx/7);
+
+    // separador solo en cambio de mes
+    if(idx>0&&idx%7===0&&monthChangeSepRows.has(rowIdx)){
       const sep=document.createElement('div');
-      sep.className='week-sep';
+      sep.className='month-sep';
       grid.appendChild(sep);
     }
 
@@ -617,40 +630,40 @@ function render(){
     // detectar cambio de mes
     const prevDay=idx>0?days[idx-1]:null;
     const isNewMonth=prevDay&&day.getMonth()!==prevDay.getMonth();
-    const isPrevMonth=prevDay&&!isNewMonth&&day.getMonth()!==days[Math.min(idx+6-(idx%7),days.length-1)].getMonth()&&false;
 
-    // marcar días del mes que termina (antes del cambio)
-    // buscar en qué mes está la mayoría de la semana actual
-    const weekStart=days[idx-idx%7];
-    const weekEnd=days[Math.min(idx-idx%7+6,days.length-1)];
-    const mainMonth=weekStart.getMonth()!==weekEnd.getMonth()?
-      (weekStart.getMonth()===days[Math.floor(days.length/2)].getMonth()?weekStart.getMonth():weekEnd.getMonth()):
-      weekStart.getMonth();
-
-    if(day.getMonth()!==mainMonth && !isNewMonth){
-      cell.classList.add('prev-month');
+    // días del mes anterior en la misma semana que el día 1
+    if(isNewMonth){
+      cell.classList.add('new-month');
+    } else if(prevDay){
+      // marcar días del mes que termina en una semana mixta
+      const weekFirstDay=days[rowIdx*7];
+      if(day.getMonth()!==weekFirstDay.getMonth()&&!monthChangeSepRows.has(rowIdx+1)){
+        // no marcar — está en su propio mes
+      }
+      // si en esta semana hay cambio y este día es del mes anterior
+      if(monthChangeSepRows.has(rowIdx)&&day.getMonth()!==days[Math.min(rowIdx*7+6,days.length-1)].getMonth()){
+        cell.classList.add('prev-month');
+      }
     }
-    if(isNewMonth) cell.classList.add('new-month');
-    if(dy===todayY)   cell.classList.add('today');
-    if(dy<todayY) cell.classList.add('past');
+
+    if(dy===todayY) cell.classList.add('today');
+    if(dy<todayY)   cell.classList.add('past');
     if(selA&&dy>=selA&&dy<=selB) cell.classList.add('sel');
 
-    // day number
-    const dn=document.createElement('div');dn.className='dnum';
+    // day number — con etiqueta de mes si es día 1 del nuevo mes
     if(isNewMonth){
       const mlbl=document.createElement('span');
       mlbl.className='month-start-lbl';
       mlbl.textContent=MONTHS[day.getMonth()].substring(0,3).toUpperCase();
       cell.appendChild(mlbl);
     }
-    dn.textContent=day.getDate();
+    const dn=document.createElement('div');dn.className='dnum';dn.textContent=day.getDate();
     cell.appendChild(dn);
 
     // items container
     const ci=document.createElement('div');ci.className='cell-items';cell.appendChild(ci);
     cell.dataset.ymd=dy;
 
-    // mouse events
     cell.addEventListener('mousedown',e=>{
       if(e.button!==0)return;
       e.preventDefault();
@@ -682,7 +695,6 @@ function render(){
 
   const winS=days[0], winE=days[days.length-1];
   requestAnimationFrame(()=>paintBands(days, ymdIdx, grid, rows, winS, winE));
-}
 
 /* ═══════════════════════════════════════════════
    PAINT BANDS (periods + recurrent + keydate — todos absolutos, slot compartido)
