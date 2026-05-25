@@ -695,6 +695,7 @@ function render(){
 
   const winS=days[0], winE=days[days.length-1];
   requestAnimationFrame(()=>paintBands(days, ymdIdx, grid, rows, winS, winE));
+}
 
 /* ═══════════════════════════════════════════════
    PAINT BANDS (periods + recurrent + keydate — todos absolutos, slot compartido)
