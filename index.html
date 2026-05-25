@@ -1209,13 +1209,13 @@ function rebuildLegend(){
 try{const s=localStorage.getItem('ov3');if(s){const p=JSON.parse(s);data=p;}}catch(e){}
 render();
 
-// punto 3: scroll rueda del mouse — navega semana a semana siempre
-let lastScroll=0;
+// Scroll rueda — 1 click de rueda = 1 semana
+let lastScrollT=0;
 document.getElementById('gridWrap').addEventListener('wheel', e=>{
   e.preventDefault();
   const now=Date.now();
-  if(now-lastScroll<120) return;
-  lastScroll=now;
+  if(now-lastScrollT<200) return;
+  lastScrollT=now;
   const dir=e.deltaY>0?1:-1;
   anchor.setDate(anchor.getDate()+dir*7);
   render();
